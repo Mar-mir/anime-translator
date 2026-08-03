@@ -1,0 +1,7 @@
+uploads/
+config.json
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db

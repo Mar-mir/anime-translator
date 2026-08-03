@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ترجمه زیرنویس انیمه</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', Tahoma, sans-serif;
+            background: #1a1a2e;
+            color: #ff8c00;
+            min-height: 100vh;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #ff8c00;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            color: #ff8c00;
+            text-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
+        }
+        
+        .header p {
+            color: #ccc;
+            margin-top: 10px;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: #2a2a4a;
+            border: none;
+            color: #ff8c00;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-family: inherit;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn:hover {
+            background: #3a3a5a;
+        }
+        
+        .tab-btn.active {
+            background: #ff8c00;
+            color: #1a1a2e;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Upload Area */
+        .upload-area {
+            border: 3px dashed #ff8c00;
+            border-radius: 20px;
+            padding: 60px;
+            text-align: center;
+            background: rgba(255, 140, 0, 0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            background: rgba(255, 140, 0, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .upload-area.dragover {
+            background: rgba(255, 140, 0, 0.2);
+            border-color: #ffaa00;
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.3em;
+            color: #ff8c00;
+        }
+        
+        .upload-hint {
+            color: #888;
+            margin-top: 10px;
+        }
+        
+        /* Two Column Layout */
+        .columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .column {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #333;
+        }
+        
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .column-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ff8c00;
+        }
+        
+        .column-badge {
+            background: #ff8c00;
+            color: #1a1a2e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+        
+        /* Subtitle Items */
+        .subtitle-list {
+            max-height: 60vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #ff8c00 #1a1a2e;
+        }
+        
+        .subtitle-item {
+            display: grid;
+            grid-template-columns: 40px 1fr;
+            gap: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            border: 1px solid #333;
+            transition: all 0.2s;
+        }
+        
+        .subtitle-item:hover {
+            border-color: #ff8c00;
+        }
+        
+        .subtitle-item.translated {
+            border-color: #2e7d32;
+        }
+        
+        .subtitle-index {
+            color: #666;
+            font-size: 0.85em;
+            text-align: center;
+        }
+        
+        .subtitle-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .subtitle-timestamp {
+            color: #888;
+            font-size: 0.75em;
+            font-family: monospace;
+        }
+        
+        .subtitle-text {
+            color: #fff;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .subtitle-translation {
+            color: #ff8c00;
+            font-size: 0.95em;
+            line-height: 1.5;
+            padding: 8px;
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 6px;
+            border: 1px solid #ff8c00;
+            min-height: 35px;
+        }
+        
+        .subtitle-translation[contenteditable="true"]:focus {
+            outline: none;
+            background: rgba(255, 140, 0, 0.15);
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress-container.active {
+            display: block;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #1a1a2e;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #ff8c00;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff8c00, #ffaa00);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #ccc;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #ff8c00;
+            color: #1a1a2e;
+        }
+        
+        .btn-primary:hover {
+            background: #ffaa00;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #2a2a4a;
+            color: #ff8c00;
+            border: 1px solid #ff8c00;
+        }
+        
+        .btn-secondary:hover {
+            background: #3a3a5a;
+        }
+        
+        .btn-danger {
+            background: #c62828;
+            color: #fff;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* Settings */
+        .settings-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        
+        .settings-section h3 {
+            color: #ff8c00;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ff8c00;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a2e;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1em;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #ff8c00;
+        }
+        
+        .key-list {
+            list-style: none;
+        }
+        
+        .key-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .key-item code {
+            color: #4caf50;
+            font-family: monospace;
+        }
+        
+        /* Stats */
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: #16213e;
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 0.85em;
+        }
+        
+        .stat-value {
+            color: #ff8c00;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        /* Messages */
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .message.active {
+            display: block;
+        }
+        
+        .message.success {
+            background: rgba(46, 125, 50, 0.2);
+            border: 1px solid #2e7d32;
+            color: #4caf50;
+        }
+        
+        .message.error {
+            background: rgba(198, 40, 40, 0.2);
+            border: 1px solid #c62828;
+            color: #ef5350;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ff8c00;
+            border-radius: 4px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            .columns {
+                grid-template-columns: 1fr;
+            }
+            
+            .upload-area {
+                padding: 40px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 ترجمه زیرنویس انیمه</h1>
+            <p>فایل SRT خود را آپلود کنید و ترجمه فارسی دریافت کنید</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('translate')">📝 ترجمه</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙️ تنظیمات</button>
+        </div>
+
+        <!-- Tab: Translate -->
+        <div id="tab-translate" class="tab-content active">
+            <div id="upload-section">
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">فایل SRT را اینجا رها کنید</div>
+                    <div class="upload-hint">یا کلیک کنید تا فایل را انتخاب کنید</div>
+                    <input type="file" id="fileInput" accept=".srt" style="display:none">
+                </div>
+            </div>
+
+            <div id="editor-section" style="display:none">
+                <div class="stats-bar">
+                    <div class="stat-card">
+                        <div class="stat-label">فایل</div>
+                        <div class="stat-value" id="stat-filename">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">کل خطوط</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">ترجمه شده</div>
+                        <div class="stat-value" id="stat-translated">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">وضعیت</div>
+                        <div class="stat-value" id="stat-status">آماده</div>
+                    </div>
+                </div>
+
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill">0%</div>
+                    </div>
+                    <div class="progress-text" id="progress-text">در حال ترجمه...</div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="btn-translate" onclick="startTranslation()">
+                        🚀 شروع ترجمه
+                    </button>
+                    <button class="btn btn-secondary" id="btn-download" onclick="downloadSrt()" style="display:none">
+                        📥 دانلود SRT ترجمه‌شده
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetEditor()">
+                        🔄 فایل جدید
+                    </button>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="column-header">
+                            <span class="column-title">🇬🇧 متن اصلی</span>
+                            <span class="column-badge" id="badge-original">0 خط</span>
+                        </div>
+                        <div class="subtitle-list" id="original-list"></div>
+                    </div>
+                    <div class="column">
+                        <div class="column-header">
+                            <span class="column-title">🇮🇷 ترجمه فارسی</span>
+                            <span class="column-badge" id="badge-translated">0 ترجمه</span>
+                        </div>
+                        <div class="subtitle-list" id="translated-list"></div>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="justify-content:center; margin-top:30px;">
+                    <button class="btn btn-secondary" onclick="loadPage(currentPage - 1)" id="btn-prev">◀ قبلی</button>
+                    <span id="page-info" style="color:#888; padding:10px;">صفحه 1</span>
+                    <button class="btn btn-secondary" onclick="loadPage(currentPage + 1)" id="btn-next">بعدی ▶</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Settings -->
+        <div id="tab-settings" class="tab-content">
+            <div class="settings-section">
+                <h3>🔑 مدیریت کلیدهای API</h3>
+                
+                <div class="form-group">
+                    <label>افزودن کلید API جدید</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="password" id="new-api-key" placeholder="sk-..." style="flex:1">
+                        <button class="btn btn-primary" onclick="addApiKey()">افزودن</button>
+                    </div>
+                </div>
+
+                <ul class="key-list" id="key-list"></ul>
+            </div>
+
+            <div class="settings-section">
+                <h3>🤖 تنظیمات مدل</h3>
+                
+                <div class="form-group">
+                    <label>Base URL (آدرس API)</label>
+                    <input type="text" id="base-url" placeholder="https://api.openai.com/v1">
+                </div>
+
+                <div class="form-group">
+                    <label>نام مدل</label>
+                    <input type="text" id="model-name" placeholder="gpt-4o-mini">
+                </div>
+
+                <div class="form-group">
+                    <label>تعداد خطوط در هر دسته</label>
+                    <input type="number" id="batch-size" value="20" min="5" max="50">
+                </div>
+
+                <button class="btn btn-primary" onclick="saveSettings()">💾 ذخیره تنظیمات</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentJobId = null;
+        let currentPage = 0;
+        let totalPages = 1;
+        let pollInterval = null;
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            if (tab === 'settings') loadSettings();
+        }
+
+        // Messages
+        function showMessage(text, type) {
+            const el = document.getElementById('message');
+            el.textContent = text;
+            el.className = 'message active ' + type;
+            setTimeout(() => el.classList.remove('active'), 5000);
+        }
+
+        // File upload
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) uploadFile(e.target.files[0]);
+        });
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.error) {
+                    showMessage(data.error, 'error');
+                    return;
+                }
+
+                currentJobId = data.job_id;
+                document.getElementById('stat-filename').textContent = data.filename;
+                document.getElementById('stat-total').textContent = data.total_lines;
+                document.getElementById('stat-translated').textContent = '0';
+                
+                document.getElementById('upload-section').style.display = 'none';
+                document.getElementById('editor-section').style.display = 'block';
+                document.getElementById('btn-translate').disabled = false;
+                document.getElementById('btn-download').style.display = 'none';
+
+                loadPage(0);
+                showMessage(`فایل "${data.filename}" با ${data.total_lines} خط آپلود شد`, 'success');
+            } catch (err) {
+                showMessage('خطا در آپلود فایل', 'error');
+            }
+        }
+
+        async function loadPage(page) {
+            if (!currentJobId || page < 0 || page >= totalPages) return;
+            currentPage = page;
+
+            try {
+                const res = await fetch(`/api/preview/${currentJobId}?page=${page}&per_page=50`);
+                const data = await res.json();
+
+                totalPages = data.total_pages;
+                document.getElementById('page-info').textContent = `صفحه ${page + 1} از ${totalPages}`;
+                document.getElementById('btn-prev').disabled = page === 0;
+                document.getElementById('btn-next').disabled = page >= totalPages - 1;
+
+                renderSubtitles(data.items);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderSubtitles(items) {
+            const origList = document.getElementById('original-list');
+            const transList = document.getElementById('translated-list');
+
+            let origHtml = '';
+            let transHtml = '';
+            let translatedCount = 0;
+
+            items.forEach(item => {
+                if (item.translated) translatedCount++;
+
+                origHtml += `
+                    <div class="subtitle-item">
+                        <div class="subtitle-index">#${item.index}</div>
+                        <div class="subtitle-content">
+                            <div class="subtitle-timestamp">${item.timestamp}</div>
+                            <div class="subtitle-text">${escapeHtml(item.text)}</div>
+                        </div>
+                    </div>`;
+
+                transHtml += `
+                    <div class="subtitle-item ${item.translated ? 'translated' : ''}">
+                        <div class="subtitle-index">#${item.index}</div>
+                        <div class="subtitle-content">
+                            <div class="subtitle-timestamp">${item.timestamp}</div>
+                            <div class="subtitle-translation" contenteditable="true" 
+                                 onblur="editTranslation(${item.index}, this.textContent)"
+                                 data-index="${item.index}">${escapeHtml(item.translation || '')}</div>
+                        </div>
+                    </div>`;
+            });
+
+            origList.innerHTML = origHtml;
+            transList.innerHTML = transHtml;
+
+            document.getElementById('badge-original').textContent = items.length + ' خط';
+            document.getElementById('badge-translated').textContent = translatedCount + ' ترجمه';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function editTranslation(index, text) {
+            if (!currentJobId) return;
+            await fetch(`/api/edit/${currentJobId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index, translation: text})
+            });
+        }
+
+        async function startTranslation() {
+            if (!currentJobId) return;
+
+            const btn = document.getElementById('btn-translate');
+            btn.disabled = true;
+            btn.textContent = '⏳ در حال ترجمه...';
+
+            try {
+                const res = await fetch('/api/translate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({job_id: currentJobId})
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    showMessage(data.error, 'error');
+                    btn.disabled = false;
+                    btn.textContent = '🚀 شروع ترجمه';
+                    return;
+                }
+
+                document.getElementById('progress-container').classList.add('active');
+                document.getElementById('stat-status').textContent = 'در حال ترجمه';
+                startPolling();
+            } catch (err) {
+                showMessage('خطا در شروع ترجمه', 'error');
+                btn.disabled = false;
+                btn.textContent = '🚀 شروع ترجمه';
+            }
+        }
+
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(pollStatus, 2000);
+        }
+
+        async function pollStatus() {
+            if (!currentJobId) return;
+
+            try {
+                const res = await fetch(`/api/status/${currentJobId}`);
+                const data = await res.json();
+
+                document.getElementById('progress-fill').style.width = data.progress + '%';
+                document.getElementById('progress-fill').textContent = data.progress + '%';
+                document.getElementById('stat-translated').textContent = data.translated_count;
+                document.getElementById('progress-text').textContent = 
+                    `${data.translated_count} از ${data.total_lines} خط ترجمه شد`;
+
+                if (data.status === 'completed') {
+                    clearInterval(pollInterval);
+                    document.getElementById('progress-text').textContent = '✅ ترجمه کامل شد!';
+                    document.getElementById('stat-status').textContent = 'کامل ✅';
+                    document.getElementById('btn-translate').textContent = '🚀 شروع ترجمه';
+                    document.getElementById('btn-translate').disabled = false;
+                    document.getElementById('btn-download').style.display = 'inline-block';
+                    loadPage(0);
+                    showMessage('ترجمه با موفقیت کامل شد!', 'success');
+                } else if (data.status === 'error') {
+                    clearInterval(pollInterval);
+                    document.getElementById('progress-text').textContent = '❌ خطا: ' + (data.error || 'نامشخص');
+                    document.getElementById('stat-status').textContent = 'خطا ❌';
+                    document.getElementById('btn-translate').textContent = '🚀 شروع ترجمه';
+                    document.getElementById('btn-translate').disabled = false;
+                    showMessage('خطا در ترجمه: ' + (data.error || ''), 'error');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function downloadSrt() {
+            if (!currentJobId) return;
+            window.location.href = `/api/download/${currentJobId}`;
+        }
+
+        function resetEditor() {
+            if (pollInterval) clearInterval(pollInterval);
+            currentJobId = null;
+            currentPage = 0;
+            document.getElementById('upload-section').style.display = 'block';
+            document.getElementById('editor-section').style.display = 'none';
+            document.getElementById('progress-container').classList.remove('active');
+            fileInput.value = '';
+        }
+
+        // Settings
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/config');
+                const config = await res.json();
+                
+                document.getElementById('base-url').value = config.base_url || 'https://api.openai.com/v1';
+                document.getElementById('model-name').value = config.default_model || 'gpt-4o-mini';
+                document.getElementById('batch-size').value = config.batch_size || 20;
+                
+                loadKeys();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadKeys() {
+            try {
+                const res = await fetch('/api/keys');
+                const data = await res.json();
+                
+                const list = document.getElementById('key-list');
+                if (data.keys.length === 0) {
+                    list.innerHTML = '<li style="color:#888; padding:10px;">هیچ کلیدی ثبت نشده</li>';
+                    return;
+                }
+                
+                list.innerHTML = data.keys.map(k => `
+                    <li class="key-item">
+                        <code>${k.masked}</code>
+                        <button class="btn btn-danger" onclick="deleteKey(${k.index})" style="padding:5px 15px">حذف</button>
+                    </li>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function addApiKey() {
+            const input = document.getElementById('new-api-key');
+            const key = input.value.trim();
+            if (!key) return showMessage('کلید را وارد کنید', 'error');
+
+            try {
+                const res = await fetch('/api/keys', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({key})
+                });
+                const data = await res.json();
+                
+                if (data.error) return showMessage(data.error, 'error');
+                
+                input.value = '';
+                loadKeys();
+                showMessage('کلید API اضافه شد', 'success');
+            } catch (err) {
+                showMessage('خطا در افزودن کلید', 'error');
+            }
+        }
+
+        async function deleteKey(index) {
+            try {
+                await fetch(`/api/keys/${index}`, { method: 'DELETE' });
+                loadKeys();
+                showMessage('کلید حذف شد', 'success');
+            } catch (err) {
+                showMessage('خطا در حذف کلید', 'error');
+            }
+        }
+
+        async function saveSettings() {
+            const config = {
+                base_url: document.getElementById('base-url').value,
+                default_model: document.getElementById('model-name').value,
+                batch_size: parseInt(document.getElementById('batch-size').value)
+            };
+
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                showMessage('تنظیمات ذخیره شد', 'success');
+            } catch (err) {
+                showMessage('خطا در ذخیره تنظیمات', 'error');
+            }
+        }
+
+        // Auto-refresh translations during editing
+        setInterval(() => {
+            if (currentJobId && document.getElementById('editor-section').style.display !== 'none') {
+                // Only refresh if not actively translating
+                const btn = document.getElementById('btn-translate');
+                if (!btn.disabled) loadPage(currentPage);
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
