@@ -13,7 +13,7 @@ from srt_parser import parse_srt, blocks_to_srt
 from ssa_parser import parse_ass, blocks_to_ass, is_ass_filename
 from translator import (
     translate_subtitles, load_config, save_config,
-    get_api_key, get_all_api_keys
+    get_api_key, get_all_api_keys, DEFAULT_MODEL
 )
 
 app = Flask(__name__)
@@ -141,7 +141,7 @@ def start_translation():
         return jsonify({"error": "ترجمه در حال انجام است"}), 400
 
     api_key = data.get("api_key") or get_api_key()
-    model = data.get("model") or load_config().get("default_model", "gpt-4o-mini")
+    model = data.get("model") or load_config().get("default_model", DEFAULT_MODEL)
     base_url = data.get("base_url") or load_config().get("base_url", "https://api.openai.com/v1")
     batch_size = int(data.get("batch_size") or load_config().get("batch_size", 20))
 
@@ -278,6 +278,32 @@ def download_sub(job_id):
         download_name=f"{original_name}_fa{ext}",
         mimetype=mime
     )
+
+
+@app.route("/api/test", methods=["POST"])
+def test_connection():
+    """تست اتصال به API از سمت سرور (بدون مشکل CORS) — خطای واقعی رو برمیگردونه."""
+    import requests as _rq
+    data = request.json or {}
+    api_key = data.get("api_key") or get_api_key()
+    config = load_config()
+    base_url = (data.get("base_url") or config.get("base_url", "https://api.openai.com/v1")).rstrip("/")
+    model = data.get("model") or config.get("default_model", DEFAULT_MODEL)
+    if not api_key:
+        return jsonify({"ok": False, "error": "کلید API تنظیم نشده"}), 400
+    try:
+        r = _rq.get(f"{base_url}/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=20)
+        if r.status_code == 200:
+            try:
+                ids = [m.get("id", "") for m in r.json().get("data", [])][:8]
+            except Exception:
+                ids = []
+            hit = any(model in (i or "") or (i or "") in model for i in ids)
+            msg = f"اتصال موفق — مدل «{model}» " + ("در لیست مدلها هست ✅" if hit else "در لیست مدلها دیده نشد ⚠️ (اسم مدل رو چک کن)")
+            return jsonify({"ok": True, "message": msg, "models": ", ".join(ids) if ids else ""})
+        return jsonify({"ok": False, "error": f"API خطای {r.status_code} داد: {r.text[:300]}"}), 200
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"اتصال برقرار نشد: {str(e)[:300]}"}), 200
 
 
 @app.route("/api/keys", methods=["GET"])

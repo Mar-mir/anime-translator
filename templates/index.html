@@ -572,7 +572,7 @@
 
                 <div class="form-group">
                     <label>نام مدل</label>
-                    <input type="text" id="model-name" placeholder="gpt-4o-mini">
+                    <input type="text" id="model-name" placeholder="muse-spark-1.3-contributor-free" dir="ltr">
                 </div>
 
                 <div class="form-group">
@@ -581,6 +581,8 @@
                 </div>
 
                 <button class="btn btn-primary" onclick="saveSettings()">💾 ذخیره تنظیمات</button>
+                <button class="btn btn-secondary" id="btn-test" onclick="testConnection()">🔌 تست اتصال</button>
+                <div id="test-result" style="margin-top:12px; color:#888;"></div>
             </div>
         </div>
     </div>
@@ -829,7 +831,7 @@
                 const config = await res.json();
                 
                 document.getElementById('base-url').value = config.base_url || 'https://api.openai.com/v1';
-                document.getElementById('model-name').value = config.default_model || 'gpt-4o-mini';
+                document.getElementById('model-name').value = config.default_model || 'muse-spark-1.3-contributor-free';
                 document.getElementById('batch-size').value = config.batch_size || 20;
                 
                 loadKeys();
@@ -920,6 +922,34 @@
                 if (!btn.disabled) loadPage(currentPage);
             }
         }, 30000);
+
+        async function testConnection() {
+            const box = document.getElementById('test-result');
+            const btn = document.getElementById('btn-test');
+            btn.disabled = true;
+            box.style.color = '#888';
+            box.textContent = '⏳ در حال تست اتصال...';
+            try {
+                const res = await fetch('/api/test', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    box.style.color = '#4caf50';
+                    box.textContent = '✅ ' + data.message + (data.models ? ' (مدلها: ' + data.models + ')' : '');
+                } else {
+                    box.style.color = '#ef5350';
+                    box.textContent = '❌ ' + (data.error || 'خطای نامشخص');
+                }
+            } catch (err) {
+                box.style.color = '#ef5350';
+                box.textContent = '❌ اتصال به سرور برقرار نشد';
+            } finally {
+                btn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>

@@ -10,6 +10,8 @@ from srt_parser import SubtitleBlock, batch_blocks, extract_translation
 
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
+DEFAULT_MODEL = "muse-spark-1.3-contributor-free"
+
 SYSTEM_PROMPT = """You are a professional anime subtitle translator. Translate English anime dialogue to natural, colloquial Persian (Farsi).
 
 RULES:
@@ -29,7 +31,7 @@ def load_config() -> dict:
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
-    return {"api_keys": [], "default_model": "gpt-4o-mini", "batch_size": 20}
+    return {"api_keys": [], "default_model": DEFAULT_MODEL, "batch_size": 20}
 
 
 def save_config(config: dict):
@@ -69,7 +71,7 @@ def translate_batch(
 
     config = load_config()
     if not model:
-        model = config.get("default_model", "gpt-4o-mini")
+        model = config.get("default_model", DEFAULT_MODEL)
     if not base_url:
         base_url = config.get("base_url", "https://api.openai.com/v1")
 

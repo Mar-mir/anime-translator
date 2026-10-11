@@ -568,7 +568,7 @@
 
                 <div class="form-group">
                     <label>نام مدل</label>
-                    <input type="text" id="model-name" placeholder="gpt-4o-mini">
+                    <input type="text" id="model-name" placeholder="muse-spark-1.3-contributor-free" dir="ltr">
                 </div>
 
                 <div class="form-group">
@@ -577,6 +577,8 @@
                 </div>
 
                 <button class="btn btn-primary" onclick="saveSettings()">💾 ذخیره تنظیمات</button>
+                <button class="btn btn-secondary" id="btn-test" onclick="testConnection()">🔌 تست اتصال</button>
+                <div id="test-result" style="margin-top:12px; color:#888;"></div>
             </div>
         </div>
     </div>
@@ -584,6 +586,7 @@
     <script>
         const SYSTEM_PROMPT = "You are a professional anime subtitle translator. Translate English anime dialogue to natural, colloquial Persian (Farsi).\n\nRULES:\n1. Translate ONLY the text provided, do NOT add or remove any lines\n2. Keep the same number of lines as input\n3. Use natural Persian that anime fans would use\n4. Preserve anime-specific terms appropriately\n5. Do NOT include line numbers or timestamps in your response\n6. Each translated line should be on a separate line\n7. If a line is empty or just a sound effect (like *sigh*, *gasps*), translate it naturally\n8. For names, keep the original Japanese name or use common Persian fan translations\n9. Be concise - subtitle lines should be short and readable\n10. Match the tone: casual dialogue should stay casual, dramatic should stay dramatic";
 
+        const DEFAULT_MODEL = 'muse-spark-1.3-contributor-free';
         const CFG_KEY = 'at_config';
         function getCfg() {
             let c = {};
@@ -591,7 +594,7 @@
             return {
                 apiKey: c.apiKey || '',
                 baseUrl: (c.baseUrl || 'https://api.openai.com/v1').replace(/\/+$/, ''),
-                model: c.model || 'gpt-4o-mini',
+                model: c.model || DEFAULT_MODEL,
                 batchSize: Math.min(50, Math.max(1, parseInt(c.batchSize) || 20))
             };
         }
@@ -972,7 +975,7 @@
             try { raw = JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch (e) {}
             document.getElementById('api-key').value = raw.apiKey || '';
             document.getElementById('base-url').value = raw.baseUrl || 'https://api.openai.com/v1';
-            document.getElementById('model-name').value = raw.model || 'gpt-4o-mini';
+            document.getElementById('model-name').value = raw.model || DEFAULT_MODEL;
             document.getElementById('batch-size').value = raw.batchSize || 20;
         }
 
@@ -981,10 +984,57 @@
             localStorage.setItem(CFG_KEY, JSON.stringify({
                 apiKey: document.getElementById('api-key').value.trim(),
                 baseUrl: document.getElementById('base-url').value.trim() || 'https://api.openai.com/v1',
-                model: document.getElementById('model-name').value.trim() || 'gpt-4o-mini',
+                model: document.getElementById('model-name').value.trim() || DEFAULT_MODEL,
                 batchSize: batch
             }));
             showMessage('تنظیمات در مرورگر ذخیره شد', 'success');
+        }
+
+        async function testConnection() {
+            const box = document.getElementById('test-result');
+            const btn = document.getElementById('btn-test');
+            if (!box || !btn) return;
+            btn.disabled = true;
+            box.style.color = '#888';
+            box.textContent = '⏳ در حال تست اتصال...';
+            const trimSlash = (s) => (s || '').replace(/\/+$/, '');
+            const baseUrl = trimSlash(document.getElementById('base-url').value) || 'https://api.openai.com/v1';
+            const apiKey = document.getElementById('api-key').value.trim();
+            const model = document.getElementById('model-name').value.trim() || DEFAULT_MODEL;
+            if (!apiKey) {
+                box.style.color = '#ef5350';
+                box.textContent = '❌ کلید API را وارد و ذخیره کنید';
+                btn.disabled = false;
+                return;
+            }
+            try {
+                const res = await fetch(baseUrl + '/models', {
+                    headers: { 'Authorization': 'Bearer ' + apiKey }
+                });
+                if (!res.ok) {
+                    const t = await res.text();
+                    box.style.color = '#ef5350';
+                    box.textContent = `❌ API خطای ${res.status} داد: ` + t.slice(0, 200);
+                } else {
+                    const data = await res.json();
+                    const ids = (data.data || []).map(m => m.id).slice(0, 8);
+                    const hit = ids.some(i => i && (i.includes(model) || model.includes(i)));
+                    box.style.color = '#4caf50';
+                    box.textContent = `✅ اتصال موفق — مدل «${model}» ` +
+                        (hit ? 'در لیست مدلها هست ✅' : 'در لیست مدلها دیده نشد ⚠️ (اسم مدل رو چک کن)') +
+                        (ids.length ? ' (مدلها: ' + ids.join(', ') + ')' : '');
+                }
+            } catch (err) {
+                const s = String((err && err.message) || err);
+                box.style.color = '#ef5350';
+                if (s.includes('Failed to fetch')) {
+                    box.textContent = '❌ مرورگر نتوانست وصل شود — این سرویس CORS نمیدهد. از نسخه لوکال (python3 app.py) استفاده کن که محدودیت مرورگر ندارد.';
+                } else {
+                    box.textContent = '❌ خطا: ' + s.slice(0, 200);
+                }
+            } finally {
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
