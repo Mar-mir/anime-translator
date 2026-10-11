@@ -461,7 +461,7 @@
     <div class="container">
         <div class="header">
             <h1>🎬 ترجمه زیرنویس انیمه</h1>
-            <p>فایل SRT خود را آپلود کنید و ترجمه فارسی دریافت کنید</p>
+            <p>فایل SRT یا ASS/SSA خود را آپلود کنید و ترجمه فارسی دریافت کنید</p>
         </div>
 
         <div id="message" class="message"></div>
@@ -476,9 +476,9 @@
             <div id="upload-section">
                 <div class="upload-area" id="dropZone">
                     <div class="upload-icon">📁</div>
-                    <div class="upload-text">فایل SRT را اینجا رها کنید</div>
+                    <div class="upload-text">فایل SRT یا ASS/SSA را اینجا رها کنید</div>
                     <div class="upload-hint">یا کلیک کنید تا فایل را انتخاب کنید</div>
-                    <input type="file" id="fileInput" accept=".srt" style="display:none">
+                    <input type="file" id="fileInput" accept=".srt,.ass,.ssa" style="display:none">
                 </div>
             </div>
 
@@ -513,8 +513,8 @@
                     <button class="btn btn-primary" id="btn-translate" onclick="startTranslation()">
                         🚀 شروع ترجمه
                     </button>
-                    <button class="btn btn-secondary" id="btn-download" onclick="downloadSrt()" style="display:none">
-                        📥 دانلود SRT ترجمه‌شده
+                    <button class="btn btn-secondary" id="btn-download" onclick="downloadSub()" style="display:none">
+                        📥 دانلود ترجمهشده
                     </button>
                     <button class="btn btn-secondary" onclick="resetEditor()">
                         🔄 فایل جدید
@@ -804,10 +804,13 @@
             }
         }
 
-        function downloadSrt() {
+        function downloadSub() {
             if (!currentJobId) return;
             window.location.href = `/api/download/${currentJobId}`;
         }
+
+        // سازگاری با نسخه قبلی
+        function downloadSrt() { downloadSub(); }
 
         function resetEditor() {
             if (pollInterval) clearInterval(pollInterval);

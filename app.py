@@ -10,6 +10,7 @@ import threading
 from flask import Flask, render_template, request, jsonify, send_file, session
 from werkzeug.utils import secure_filename
 from srt_parser import parse_srt, blocks_to_srt
+from ssa_parser import parse_ass, blocks_to_ass, is_ass_filename
 from translator import (
     translate_subtitles, load_config, save_config,
     get_api_key, get_all_api_keys
@@ -67,8 +68,8 @@ def upload_file():
     if not file.filename:
         return jsonify({"error": "نام فایل خالی است"}), 400
 
-    if not file.filename.lower().endswith('.srt'):
-        return jsonify({"error": "فقط فایل SRT پشتیبانی می‌شود"}), 400
+    if not file.filename.lower().endswith(('.srt', '.ass', '.ssa')):
+        return jsonify({"error": "فقط فایل SRT و ASS/SSA پشتیبانی میشود"}), 400
 
     # ذخیره فایل
     job_id = str(uuid.uuid4())[:8]
@@ -76,22 +77,29 @@ def upload_file():
     filepath = os.path.join(UPLOAD_DIR, f"{job_id}_{filename}")
     file.save(filepath)
 
-    # پارس کردن
+    # پارس کردن (تشخیص فرمت از روی پسوند)
+    filetype = "ass" if is_ass_filename(filename) else "srt"
+    header = ""
     try:
         with open(filepath, 'r', encoding='utf-8-sig', errors='replace') as f:
             content = f.read()
-        blocks = parse_srt(content)
+        if filetype == "ass":
+            header, blocks, _ = parse_ass(content)
+        else:
+            blocks = parse_srt(content)
     except Exception as e:
         return jsonify({"error": f"خطا در خواندن فایل: {str(e)}"}), 400
 
     if not blocks:
-        return jsonify({"error": "فایل SRT خالی یا نامعتبر است"}), 400
+        return jsonify({"error": "فایل خالی یا نامعتبر است"}), 400
 
     # ذخیره در حافظه
     translation_jobs[job_id] = {
         "blocks": blocks,
         "filename": filename,
         "filepath": filepath,
+        "filetype": filetype,
+        "header": header,
         "status": "uploaded",
         "progress": 0,
         "translated_count": 0,
@@ -113,6 +121,7 @@ def upload_file():
         "ok": True,
         "job_id": job_id,
         "filename": filename,
+        "filetype": filetype,
         "total_lines": len(blocks),
         "preview": preview
     })
@@ -239,24 +248,35 @@ def edit_translation(job_id):
 
 
 @app.route("/api/download/<job_id>")
-def download_srt(job_id):
+def download_sub(job_id):
     if job_id not in translation_jobs:
         return jsonify({"error": "کار یافت نشد"}), 404
 
     job = translation_jobs[job_id]
-    srt_content = blocks_to_srt(job["blocks"])
+    filetype = job.get("filetype", "srt")
+
+    if filetype == "ass":
+        content = blocks_to_ass(job.get("header", ""), job["blocks"])
+        ext = os.path.splitext(job["filename"])[1].lower() or ".ass"
+        if ext not in (".ass", ".ssa"):
+            ext = ".ass"
+        mime = 'text/plain'
+    else:
+        content = blocks_to_srt(job["blocks"])
+        ext = ".srt"
+        mime = 'text/plain'
 
     # ذخیره موقت
-    output_path = os.path.join(UPLOAD_DIR, f"{job_id}_translated.srt")
+    output_path = os.path.join(UPLOAD_DIR, f"{job_id}_translated{ext}")
     with open(output_path, 'w', encoding='utf-8-sig') as f:
-        f.write(srt_content)
+        f.write(content)
 
     original_name = os.path.splitext(job["filename"])[0]
     return send_file(
         output_path,
         as_attachment=True,
-        download_name=f"{original_name}_fa.srt",
-        mimetype='text/plain'
+        download_name=f"{original_name}_fa{ext}",
+        mimetype=mime
     )
 
 
